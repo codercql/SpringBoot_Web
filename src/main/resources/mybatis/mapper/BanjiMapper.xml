@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zyg.dao.BanjiMapper">
+
+    <resultMap type="com.zyg.pojo.Banji" id="BanjiMap">
+        <id column="banji_id" property="banjiId"/>
+        <result column="banji_name" property="banjiName"/>
+        <result column="grade_id" property="gradeId"/>
+
+        <!--声明一对多关系-->
+        <association property="grade" javaType="com.zyg.pojo.Grade">
+            <id column="grade_id" property="gradeId"></id>
+            <result column="grade_name" property="gradeName"/>
+        </association>
+    </resultMap>
+
+    <select id="findAll" resultMap="BanjiMap">
+        SELECT sys_banji.*, sys_grade.grade_name
+        FROM sys_banji
+        LEFT JOIN sys_grade ON sys_banji.grade_id = sys_grade.grade_id
+        <where>
+            <if test="banjiName != null">
+                AND sys_banji.banji_name LIKE CONCAT('%', #{banjiName}, '%')
+            </if>
+        </where>
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="findBanjiById" resultMap="BanjiMap">
+        select sys_banji.*,sys_grade.grade_name from sys_banji left join sys_grade on sys_banji.grade_id=sys_grade.grade_id  where sys_banji.banji_id=#{id}
+    </select>
+
+    <select id="getBanjiList" resultType="com.zyg.pojo.Banji">
+        select banji_id,banji_name from sys_banji
+    </select>
+
+</mapper>

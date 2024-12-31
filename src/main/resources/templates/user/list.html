@@ -1,0 +1,329 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Title</title>
+        <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}">
+    <th:block th:include="include :: header('用户列表')" />
+    <style>
+        body {
+            padding: 10px;
+        }
+
+        .layui-form-item .layui-inline {
+            margin: 10px 0px;
+            padding-left: 15px;
+        }
+
+        #condition,#tableDiv {
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+<form id="condition">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" placeholder="请输入姓名" id="name" name="name" class="layui-input">
+            </div>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" placeholder="请输入密码" id="pass" name="pass" class="layui-input">
+            </div>
+            <button type="button" id="search" class="layui-btn">查询</button>
+            <button type="reset" id="reset" class="layui-btn">重置</button>
+        </div>
+    </div>
+</form>
+
+<!--
+本「综合演示」包含：自定义头部工具栏、获取表格数据、表格重载、自定义模板、单双行显示、单元格编辑、自定义底部分页栏、表格相关事件与操作、与其他组件的结合等相对常用的功能，以便快速掌握 table 组件的使用。
+-->
+<div id="tableDiv">
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+<script type="text/html" id="toolbarDemo">
+    <button class="layui-btn layui-btn-sm" lay-event="add">
+        <i class="glyphicon glyphicon-plus"></i>
+        新增</button>
+    <button class="layui-btn layui-btn-sm" lay-event="update">
+        <i class="glyphicon glyphicon-edit"></i>
+        修改</button>
+    <button class="layui-btn layui-btn-sm" lay-event="del">
+        <i class="glyphicon glyphicon-trash"></i>
+        删除</button>
+</script>
+<script type="text/html" id="toolDemo">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-xs" lay-event="more">
+            更多
+            <i class="layui-icon layui-icon-down"></i>
+        </a>
+    </div>
+</script>
+<script th:src="@{/js/plugins/layui/layui.js}"></script>
+<script>
+    layui.use(function(){
+        var $ = layui.$;
+        var table = layui.table;
+        var dropdown = layui.dropdown;
+
+        // 创建渲染实例
+        table.render({
+            elem: '#test',
+            url: '/user/list', // 此处为静态模拟数据，实际使用时需换成真实接口
+            toolbar: '#toolbarDemo',
+            defaultToolbar: ['filter', 'exports', 'print', { // 右上角工具图标
+                title: '提示',
+                layEvent: 'LAYTABLE_TIPS',
+                icon: 'layui-icon-tips',
+                onClick: function(obj) { // 2.9.12+
+                    layer.alert('自定义工具栏图标按钮');
+                }
+            }],
+            css: [ // 重设当前表格样式
+                '.layui-table-tool-temp{padding-right: 145px;}'
+            ].join(''),
+            cellMinWidth: 80,
+            totalRow: true, // 开启合计行
+            page: true,
+            cols: [
+                [
+                    {type: 'checkbox', fixed: 'left'},
+                    {field:'id', fixed: 'left', width:80, title: 'ID', sort: true, totalRow: '合计：'},
+                    {field:'name',  title: '用户名'},
+                    {field:'pass', title:'密码',  width:150},
+                    {field:'birthday', title: '出生日期', sort: true},
+                    {field: 'deptName', title: '部门', templet: function(d){
+                            if(!d.dept){
+                                return '暂无部门';
+                            } else {
+                                return d.dept.deptName;
+                            }
+                        }},
+                    {fixed: 'right', title:'操作', width: 134, minWidth: 125, templet: '#toolDemo'}
+                ]
+            ],
+            error: function(res, msg){
+                console.log(res, msg)
+            }
+        });
+
+        // 工具栏事件
+        table.on('toolbar(test)', function(obj){
+            var id = obj.config.id;
+            var checkStatus = table.checkStatus(id);
+            var data = checkStatus.data; // 获取选中的数据
+            var othis = lay(this);
+            switch(obj.event){
+                case 'add':
+                    layer.open({
+                        title: '添加用户',
+                        type: 2,
+                        area: ['70%','80%'],
+                        content: '/user/toadd',
+                        fixed: false, // 不固定
+                        maxmin: true,
+                        shadeClose: true,
+                        btn: ['立即提交', '取消'],
+                        btnAlign: 'c',
+                        yes: function(index, layero){
+                            // 获取 iframe 的窗口对象
+                            var iframeWin =  window[layero.find('iframe')[0]['name']];
+                            let name = iframeWin.$('#name'); // 获得 iframe 中某个输入框元素
+                            let pass = iframeWin.$('#pass'); // 获得 iframe 中某个输入框元素
+                            let birthday = iframeWin.$('#birthday'); // 获得 iframe 中某个输入框元素
+                            let deptId = iframeWin.$('#deptId'); // 获得 iframe 中某个输入框元素
+                            let roleIds = iframeWin.$('#roleIds'); // 获得 iframe 中某个输入框元素
+                            if($.trim(name.val()) === '') {
+                                // 显示获得的值
+                                layer.msg('账号不能为空');
+                                return name.focus();
+                            }
+                            if($.trim(pass.val()) === '') {
+                                layer.msg('密码不能为空');
+                                return pass.focus();
+                            }
+                            if($.trim(birthday.val()) === '') {
+                                layer.msg('出生日期不能为空');
+                                return birthday.focus();
+                            }
+                            if($.trim(deptId.val()) === '') {
+                                layer.msg('必须选择部门');
+                                return deptId.focus();
+                            }
+                            if($.trim(roleIds.val()) === '') {
+                                layer.msg('必须选择角色');
+                                return roleIds.focus();
+                            }
+                            $.ajax({
+                                url: '/user/addSave',
+                                type: 'post',
+                                data: {
+                                    name: name.val(),
+                                    pass: pass.val(),
+                                    birthday: birthday.val(),
+                                    deptId: deptId.val(),
+                                    roleIds: roleIds.val()
+                                },
+                                dataType: 'json',
+                                success: function(res) {
+                                    layer.close(index);
+                                    if(res.code === 0) {
+                                        layer.msg(res.msg);
+                                        //刷新表格
+                                        table.reload('test');
+                                    }
+                                }
+                            })
+                        }
+                    });
+                    break;
+                case 'update':
+                    if(data.length !== 1) return layer.msg('请选择一行');
+                    layer.open({
+                        title: '编辑用户',
+                        type: 2,
+                        area: ['70%','80%'],
+                        content: '/user/toupdate/'+checkStatus.data[0].id,
+                        fixed: false, // 不固定
+                        maxmin: true,
+                        shadeClose: true,
+                        btn: ['立即提交', '取消'],
+                        btnAlign: 'c',
+                        yes: function(index, layero){
+                            // 获取 iframe 的窗口对象
+                            var iframeWin =  window[layero.find('iframe')[0]['name']];
+                            let name = iframeWin.$('#name'); // 获得 iframe 中某个输入框元素
+                            let pass = iframeWin.$('#pass'); // 获得 iframe 中某个输入框元素
+                            let birthday = iframeWin.$('#birthday'); // 获得 iframe 中某个输入框元素
+                            let deptId = iframeWin.$('#deptId'); // 获得 iframe 中某个输入框元素
+                            let roleIds = iframeWin.$('#roleIds'); // 获得 iframe 中某个输入框元素
+                            if($.trim(name.val()) === '') {
+                                // 显示获得的值
+                                layer.msg('账号不能为空');
+                                return name.focus();
+                            }
+                            if($.trim(pass.val()) === '') {
+                                layer.msg('密码不能为空');
+                                return pass.focus();
+                            }
+
+                            if($.trim(birthday.val()) === '') {
+                                layer.msg('出生日期不能为空');
+                                return birthday.focus();
+                            }
+                            if($.trim(deptId.val()) === '') {
+                                layer.msg('必须选择部门');
+                                return deptId.focus();
+                            }
+
+                            if($.trim(roleIds.val()) === '') {
+                                layer.msg('必须选择角色');
+                                return roleIds.focus();
+                            }
+                            $.ajax({
+                                url: '/user/updateSave',
+                                type: 'post',
+                                data: {
+                                    id: checkStatus.data[0].id,
+                                    name: name.val(),
+                                    pass: pass.val(),
+                                    birthday: birthday.val(),
+                                    deptId: deptId.val(),
+                                    roleIds: roleIds.val()
+                                },
+                                dataType: 'json',
+                                success: function(res) {
+                                    layer.close(index);
+                                    if(res.code === 0) {
+                                        layer.msg(res.msg);
+                                        //刷新表格
+                                        table.reload('test');
+                                    }
+                                }
+                            })
+                        }
+                    });
+                    break;
+                case 'del':
+                    if(data.length !== 1) return layer.msg('请选择一行');
+                    layer.confirm('确定删除吗？', function(index){
+                        $.ajax({
+                            url: '/user/delete/'+checkStatus.data[0].id,
+                            type: 'post',
+                            dataType: 'json',
+                            success: function(res) {
+                                layer.close(index);
+                                if(res.code === 0) {
+                                    layer.msg(res.msg);
+                                    table.reload('test');
+                                }
+                            }
+                        })
+                    });
+            };
+        });
+
+        // 触发单元格工具事件
+        table.on('tool(test)', function(obj){ // 双击 toolDouble
+            var data = obj.data; // 获得当前行数据
+            // console.log(obj)
+            if(obj.event === 'edit'){
+                layer.open({
+                    title: '编辑 - id:'+ data.id,
+                    type: 1,
+                    area: ['80%','80%'],
+                    content: '<div style="padding: 16px;">自定义表单元素</div>'
+                });
+            } else if(obj.event === 'more'){
+                // 更多 - 下拉菜单
+                dropdown.render({
+                    elem: this, // 触发事件的 DOM 对象
+                    show: true, // 外部事件触发即显示
+                    data: [{
+                        title: '查看',
+                        id: 'detail'
+                    },{
+                        title: '删除',
+                        id: 'del'
+                    }],
+                    click: function(menudata){
+                        if(menudata.id === 'detail'){
+                            layer.msg('查看操作，当前行 ID:'+ data.id);
+                        } else if(menudata.id === 'del'){
+                            layer.confirm('真的删除行 [id: '+ data.id +'] 么', function(index){
+                                obj.del(); // 删除对应行（tr）的DOM结构
+                                layer.close(index);
+                                // 向服务端发送删除指令
+                            });
+                        }
+                    },
+                    align: 'right', // 右对齐弹出
+                    style: 'box-shadow: 1px 1px 10px rgb(0 0 0 / 12%);' // 设置额外样式
+                })
+            }
+        });
+
+        $("#search").click(function (){
+            var name = $("#name").val();
+            var pass = $("#pass").val();
+            var data = {name:name,pass:pass};
+            table.reload('test',{
+                where:data,
+                page:{
+                    curr:1
+                }
+            })
+        })
+        $("#reset").click(function (){
+            table.reload('test',{
+                where:{},
+                page:{
+                    curr:1
+                }
+            });
+        })
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}" >
+</head>
+<body>
+<div th:object="${dorm}">
+    <input type="hidden" id="dormId" th:field="*{dormId}">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">宿舍名称</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="dormName"  th:field="*{dormName}" class="layui-input">
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/jquery.min.js}"></script>
+</body>
+</html>
+
+
+

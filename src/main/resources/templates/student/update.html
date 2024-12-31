@@ -1,0 +1,217 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}" />
+</head>
+<body>
+<div th:object="${student}">
+    <input type="hidden" id="studentId" th:field="*{studentId}" />
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">姓名</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="studentName" th:field="*{studentName}" class="layui-input" />
+            </div>
+        </div>
+
+        <div class="layui-inline">
+            <label class="layui-form-label">密码</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="studentPassword" th:field="*{studentPassword}" class="layui-input" />
+            </div>
+        </div>
+
+        <div class="layui-inline">
+            <label class="layui-form-label">性别</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="studentGender" th:field="*{studentGender}" class="layui-input" />
+            </div>
+        </div>
+
+        <div class="layui-inline">
+            <label class="layui-form-label">年龄</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="studentAge" th:field="*{studentAge}" class="layui-input" />
+            </div>
+        </div>
+
+        <!-- 新增班级下拉框 -->
+        <div class="layui-inline">
+            <label class="layui-form-label">班级选择</label>
+            <div class="layui-input-inline">
+                <select id="banjiSelect" name="banjiId" th:field="*{banjiId}" class="layui-select"></select>
+            </div>
+        </div>
+        <!-- 新增年级下拉框 -->
+        <div class="layui-inline">
+            <label class="layui-form-label">年级选择</label>
+            <div class="layui-input-inline">
+                <select id="gradeSelect" name="gradeId" th:field="*{gradeId}" class="layui-select"></select>
+            </div>
+        </div>
+        <!-- 新增宿舍下拉框 -->
+        <div class="layui-inline">
+            <label class="layui-form-label">宿舍选择</label>
+            <div class="layui-input-inline">
+                <select id="dormSelect" name="dormId" th:field="*{dormId}" class="layui-select"></select>
+            </div>
+        </div>
+        <!-- 新增专业下拉框 -->
+        <div class="layui-inline">
+            <label class="layui-form-label">专业选择</label>
+            <div class="layui-input-inline">
+                <select id="majorSelect" name="majorId" th:field="*{majorId}" class="layui-select"></select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:inline="javascript">
+    $(document).ready(function() {
+        // 发送 AJAX 请求获取班级列表并填充下拉框
+        $.ajax({
+            url: '/banji/list',
+            type: 'get',
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 0) { // 检查请求是否成功
+                    var select = $('#banjiSelect');
+                    // 清空已有的选项（如果有）
+                    select.empty();
+                    // 添加默认选项
+                    select.append('<option value="">未选择</option>');
+                    // 遍历返回的数据并添加为下拉框选项
+                    $.each(res.data, function(index, banji) {
+                        var option = new Option(banji.banjiName, banji.banjiId);
+                        select.append(option);
+
+                        // 如果当前班级有年级信息且与当前遍历的年级ID匹配，则选中该选项
+                        var currentBanjiId = [[${student.banjiId}]] || null;
+                        console.log("currentBanjiId",currentBanjiId)
+                        if (currentBanjiId !== null && currentBanjiId == banji.banjiId) {
+                            option.selected = true;
+                        }
+                    });
+                } else {
+                    console.error('获取年级列表失败:', res.msg);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX 请求失败:', error);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        // 发送 AJAX 请求获取年级列表并填充下拉框
+        $.ajax({
+            url: '/grade/list',
+            type: 'get',
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 0) { // 检查请求是否成功
+                    var select = $('#gradeSelect');
+                    // 清空已有的选项（如果有）
+                    select.empty();
+                    // 添加默认选项
+                    select.append('<option value="">未选择</option>');
+                    // 遍历返回的数据并添加为下拉框选项
+                    $.each(res.data, function(index, grade) {
+                        var option = new Option(grade.gradeName, grade.gradeId);
+                        select.append(option);
+
+                        // 如果当前班级有年级信息且与当前遍历的年级ID匹配，则选中该选项
+                        var currentGradeId = [[${student.gradeId}]] || null;
+                        console.log("currentGradeId",currentGradeId)
+                        if (currentGradeId !== null && currentGradeId == grade.gradeId) {
+                            option.selected = true;
+                        }
+                    });
+
+                } else {
+                    console.error('获取年级列表失败:', res.msg);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX 请求失败:', error);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        // 发送 AJAX 请求获取宿舍列表并填充下拉框
+        $.ajax({
+            url: '/dorm/list',
+            type: 'get',
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 0) { // 检查请求是否成功
+                    var select = $('#dormSelect');
+                    // 清空已有的选项（如果有）
+                    select.empty();
+                    select.val('11111')
+                    // 添加默认选项
+                    // select.append('<option value="">未选择</option>');
+                    console.log("select",select)
+                    // 遍历返回的数据并添加为下拉框选项
+                    $.each(res.data, function(index, dorm) {
+                        var option = new Option(dorm.dormName, dorm.dormId);
+                        select.append(option);
+
+                        // 如果当前班级有年级信息且与当前遍历的年级ID匹配，则选中该选项
+                        var currentDormId = [[${student.dormId}]] || null;
+                        console.log("currentDormId",currentDormId)
+                        if (currentDormId !== null && currentDormId == dorm.dormId) {
+                            option.selected = true;
+                        }
+                    });
+                } else {
+                    console.error('获取年级列表失败:', res.msg);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX 请求失败:', error);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        // 发送 AJAX 请求获取专业列表并填充下拉框
+        $.ajax({
+            url: '/major/list',
+            type: 'get',
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 0) { // 检查请求是否成功
+                    var select = $('#majorSelect');
+                    // 清空已有的选项（如果有）
+                    select.empty();
+                    // 添加默认选项
+                    select.append('<option value="">未选择</option>');
+
+                    // 遍历返回的数据并添加为下拉框选项
+                    $.each(res.data, function(index, major) {
+                        var option = new Option(major.majorName, major.majorId);
+
+                        select.append(option);
+                        // 如果当前班级有年级信息且与当前遍历的年级ID匹配，则选中该选项
+                        var currentMajorId = [[${student.majorId}]] || null;
+                        console.log("currentMajorId",currentMajorId)
+
+                        if (currentMajorId !== null && currentMajorId == major.majorId) {
+                            option.selected = true;
+                        }
+                    });
+                } else {
+                    console.error('获取年级列表失败:', res.msg);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX 请求失败:', error);
+            }
+        });
+    });
+</script>
+</body>
+</html>

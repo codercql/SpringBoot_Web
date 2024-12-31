@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.zyg.dao.UserMapper">
+
+    <resultMap type="User" id="UserMap">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="pass" property="pass"/>
+        <result column="birthday" property="birthday"/>
+        <association property="dept" javaType="Dept">
+            <id column="dept_id" property="deptId"/>
+            <result column="dept_name" property="deptName"/>
+        </association>
+    </resultMap>
+
+    <!-- 查询用户表记录数 -->
+    <select id="count" resultType="int" parameterType="User">
+        select count(1) as count from sys_user  where 1 = 1
+        <if test="name != null and name != ''">
+            and name like concat('%',#{name},'%')
+        </if>
+        <if test="pass != null and pass != ''">
+            and pass like concat('%',#{pass},'%')
+        </if>
+    </select>
+
+    <!-- 查询用户表所有信息 -->
+    <select id="findAll" resultMap="UserMap">
+        select u.id,u.name,u.pass,u.birthday,d.dept_id,d.dept_name from sys_user u left join sys_dept d on u.dept_id = d.dept_id where 1 = 1
+        <if test="user.name != null and user.name != ''">
+            and name like concat('%',#{user.name},'%')
+        </if>
+        <if test="user.pass != null and user.pass != ''">
+            and pass like concat('%',#{user.pass},'%')
+        </if>
+        order by u.id
+        limit #{offset},#{pageSize}
+    </select>
+
+    <insert id="addUser" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+        insert into sys_user(name,pass,birthday,dept_id) values(#{name},#{pass},#{birthday},#{deptId})
+    </insert>
+
+    <delete id="deleteUser" parameterType="int">
+        delete from sys_user where id = #{id}
+    </delete>
+
+    <select id="findUserById" parameterType="int" resultMap="UserMap">
+        select * from sys_user where id = #{id}
+    </select>
+
+    <select id="login" resultType="User" parameterType="User">
+        select * from sys_user where name = #{name} and pass = #{pass}
+    </select>
+
+    <select id="findUserByUserName" resultType="User">
+        select * from sys_user where name = #{username}
+    </select>
+
+    <update id="updateUser" parameterType="User">
+        update sys_user
+        <trim prefix="set" suffixOverrides=",">
+            <if test="name != null and name != ''">name = #{name},</if>
+            <if test="pass != null">pass = #{pass}, </if>
+            <if test="birthday != null">birthday = #{birthday},</if>
+            <if test="deptId != null">dept_id = #{deptId},</if>
+        </trim>
+        where id = #{id}
+    </update>
+
+    <select id="getGirlRatio" resultType="java.lang.String">
+        SELECT
+        (COUNT(CASE WHEN student_gender = '女' THEN 1 END) / COUNT(*)) * 100 AS male_percentage
+        FROM
+        sys_student;
+    </select>
+
+    <select id="getBoyRatio" resultType="java.lang.String">
+        SELECT
+        (COUNT(CASE WHEN student_gender = '男' THEN 1 END) / COUNT(*)) * 100 AS male_percentage
+        FROM
+        sys_student;
+    </select>
+
+    <select id="majorStudentNum" resultType="com.zyg.pojo.NameValueVO">
+        SELECT
+        sm.major_name as name ,
+        COUNT(*) AS value
+        FROM
+        sys_student stu
+        inner join sys_major sm on sm.major_id = stu.major_id
+        GROUP BY
+        stu.major_id,sm.major_name
+        ORDER BY
+        value DESC;
+    </select>
+
+    <select id="majorStudentRatio" resultType="com.zyg.pojo.NameValueVO">
+        SELECT
+        sm.major_name as name ,
+        COUNT(*) AS student_count,
+        (COUNT(*) / (SELECT COUNT(*) FROM sys_student)) * 100  AS value
+        FROM
+        sys_student stu
+        inner join sys_major sm on sm.major_id = stu.major_id
+        GROUP BY
+        stu.major_id,sm.major_name
+        ORDER BY
+        student_count DESC;
+    </select>
+
+    <select id="gradeStudentNum" resultType="com.zyg.pojo.NameValueVO">
+        SELECT
+        sm.grade_name as name ,
+        COUNT(*) AS value
+        FROM
+        sys_student stu
+        inner join sys_grade sm on sm.grade_id = stu.grade_id
+        GROUP BY
+        stu.grade_id ,sm.grade_name
+        ORDER BY
+        value DESC;
+    </select>
+
+    <select id="banjiStudentNum" resultType="com.zyg.pojo.NameValueVO">
+        SELECT
+        sm.banji_name as name ,
+        COUNT(*) AS value
+        FROM
+        sys_student stu
+        inner join sys_banji sm on sm.banji_id = stu.banji_id
+        GROUP BY
+        stu.banji_id ,sm.banji_name
+        ORDER BY
+        value desc limit 6;
+    </select>
+
+    <select id="majorBoyGirlNum" resultType="com.zyg.pojo.MajorBoyGirlNumVO">
+        SELECT
+        sm.major_name AS name,
+        COUNT(*) AS student_count,
+        COUNT(CASE WHEN stu.student_gender = '男' THEN 1 END) AS boy_count,
+        COUNT(CASE WHEN stu.student_gender = '女' THEN 1 END) AS girl_count
+        FROM
+        sys_student stu
+        INNER JOIN
+        sys_major sm ON sm.major_id = stu.major_id
+        GROUP BY
+        stu.major_id, sm.major_name
+        ORDER BY
+        student_count DESC;
+    </select>
+
+
+
+
+</mapper>

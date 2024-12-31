@@ -1,0 +1,110 @@
+<html>
+<head>
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}">
+    <style>
+        body {
+            padding: 10px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="layui-form">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">权限名称</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="menuName" name="menuName" class="layui-input">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <input type="hidden" id="menuType" value="">
+        <label class="layui-form-label">菜单类型</label>
+        <div class="layui-input-block">
+            <input type="radio" lay-filter="menuType-filter" name="menuType" value="M" class="layui-input" title="目录">
+            <input type="radio" lay-filter="menuType-filter" name="menuType" value="C" class="layui-input" title="菜单">
+            <input type="radio" lay-filter="menuType-filter" name="menuType" value="F" class="layui-input" title="按钮">
+        </div>
+    </div>
+
+    <div class="layui-form-item" id="pIdFormItem">
+        <label class="layui-form-label">父级菜单</label>
+        <div class="layui-input-inline layui-input-wrap">
+            <select id="pId">
+                <option value="">请选择</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">请求地址</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="url" name="url" class="layui-input">
+            </div>
+        </div>
+    </div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">权限标识</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="perms" name="perms" class="layui-input">
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/js/plugins/layui/layui.js}"></script>
+<script>
+
+
+    layui.use(function () {
+        var form = layui.form;
+        var $ = layui.$;
+
+        form.on('radio(menuType-filter)', function(data){
+            let menuType = data.elem.value;
+            $("#menuType").val(menuType);
+            if (menuType == "M") {
+                $("#parentId").val("0");
+                $("#pIdFormItem").hide();
+                $("#url").val("#").attr("disabled", true);
+                $("#perms").val("").attr("disabled", true);
+            } else if(menuType == "C") {
+                $("#pIdFormItem").show();
+                $("#url").val("").removeAttr("disabled");
+                $("#perms").val("").removeAttr("disabled");
+                getListMenu("M");
+            } else if(menuType == "F"){
+                $("#pIdFormItem").show();
+                $("#url").val("").removeAttr("disabled");
+                $("#perms").val("").removeAttr("disabled");
+                getListMenu("C");
+            }
+        })
+
+        function getListMenu(menuType) {
+            $.ajax({
+                type: "get",
+                url: "/permission/listMenu",
+                data: {
+                    menuType: menuType
+                },
+                dataType: "json",
+                success: function (data) {
+                    $("#pId").empty();
+                    $("#pId").append("<option value=''>请选择</option>");
+                    for (let i = 0; i < data.length; i++) {
+                        let menu = data[i];
+                        $("#pId").append("<option value='" + menu.id + "'>" + menu.menuName + "</option>");
+                    }
+                    form.render('select')
+                }
+            })
+        }
+    })
+</script>
+</body>
+</html>

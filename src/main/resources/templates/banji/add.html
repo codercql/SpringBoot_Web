@@ -1,0 +1,57 @@
+<html>
+<head>
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}">
+</head>
+<body>
+<div>
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">班级名称</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="banjiName" name="banjiName" class="layui-input">
+            </div>
+        </div>
+        <!-- 新增年级下拉框 -->
+        <div class="layui-inline">
+            <label class="layui-form-label">年级选择</label>
+            <div class="layui-input-inline">
+                <select id="gradeSelect" name="gradeSelect" class="layui-select"></select>
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/jquery.min.js}"></script>
+<!-- 确保你的自定义脚本放在所有依赖库之后 -->
+<script src="path/to/your/custom-script.js"></script>
+</body>
+</html>
+
+<script>
+    $(document).ready(function() {
+        // 发送 AJAX 请求获取年级列表
+        $.ajax({
+            url: '/grade/list',
+            type: 'get',
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 0) { // 检查请求是否成功
+                    var select = $('#gradeSelect');
+                    // 清空已有的选项（如果有）
+                    select.empty();
+                    // 添加默认选项
+                    select.append('<option value="">请选择年级</option>');
+                    // 遍历返回的数据并添加为下拉框选项
+                    $.each(res.data, function(index, grade) {
+                        select.append(new Option(grade.gradeName, grade.gradeId));
+                    });
+                } else {
+                    console.error('获取年级列表失败:', res.msg);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX 请求失败:', error);
+            }
+        });
+    });
+</script>

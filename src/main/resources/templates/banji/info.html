@@ -1,0 +1,63 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}" />
+</head>
+<body>
+<div th:object="${banji}">
+    <input type="hidden" id="banjiId" th:field="*{banjiId}" />
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">班级名称</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="banjiName" disabled th:field="*{banjiName}" class="layui-input" />
+            </div>
+        </div>
+        <!-- 新增年级下拉框 -->
+        <div class="layui-inline">
+            <label class="layui-form-label">年级选择</label>
+            <div class="layui-input-inline">
+                <select id="gradeSelect" name="gradeId" class="layui-select" disabled></select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:inline="javascript">
+    $(document).ready(function() {
+        // 发送 AJAX 请求获取年级列表并填充下拉框
+        $.ajax({
+            url: '/grade/list',
+            type: 'get',
+            dataType: 'json',
+            success: function(res) {
+                if (res.code === 0) { // 检查请求是否成功
+                    var select = $('#gradeSelect');
+                    // 清空已有的选项（如果有）
+                    select.empty();
+                    // 添加默认选项
+                    select.append('<option value="">未选择</option>');
+                    // 遍历返回的数据并添加为下拉框选项
+                    $.each(res.data, function(index, grade) {
+                        var option = new Option(grade.gradeName, grade.gradeId);
+                        select.append(option);
+
+                        // 如果当前班级有年级信息且与当前遍历的年级ID匹配，则选中该选项
+                        var currentGradeId = /*[[${banji.grade?.gradeId}]]*/ null;
+                        if (currentGradeId !== null && currentGradeId == grade.gradeId) {
+                            option.selected = true;
+                        }
+                    });
+                } else {
+                    console.error('获取年级列表失败:', res.msg);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX 请求失败:', error);
+            }
+        });
+    });
+</script>
+</body>
+</html>

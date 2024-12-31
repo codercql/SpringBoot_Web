@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}" >
+</head>
+<body>
+<div th:object="${dept}">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">部门名称</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="deptName" disabled th:field="*{deptName}" class="layui-input">
+            </div>
+        </div>
+    </div>
+</div>
+<script th:src="@{/js/jquery.min.js}"></script>
+</body>
+</html>
+

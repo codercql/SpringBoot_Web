@@ -1,0 +1,89 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Title</title>
+    <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}" >
+</head>
+<body>
+<div th:object="${user}" class="layui-form">
+    <input type="hidden" id="id" th:field="*{id}">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">姓名</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="name"  th:field="*{name}" class="layui-input">
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">密码</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="pass"  th:field="*{pass}" class="layui-input">
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">出生日期</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" id="birthday" th:field="*{birthday}" class="layui-input">
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <label class="layui-form-label">所属部门</label>
+            <div class="layui-input-inline layui-input-wrap">
+                <select id="deptId" name="deptId" th:with="depts=${@deptService.getDeptList()}">
+                    <option value="">请选择</option>
+                    <option th:each="d : ${depts}" th:text="${d.deptName}" th:value="${d.deptId}" th:selected="${user.dept != null && d.deptId == user.dept.deptId}"></option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <input type="hidden" id="roleIds" name="roleIds" th:value="${#strings.listJoin(roleIds,',')}" >
+        <label class="layui-form-label">角色</label>
+        <div class="layui-input-block" th:with="roles=${@roleService.list()}">
+            <input name="roleId" lay-filter="role-filter" type="checkbox" th:each="role:${roles}"
+                   th:title="${role.roleName}" th:value="${role.roleId}"
+                   th:checked="${roleIds != null && #lists.size(roleIds) > 0 && #lists.contains(roleIds,role.roleId)}">
+        </div>
+    </div>
+
+</div>
+<script th:src="@{/js/jquery.min.js}"></script>
+<script th:src="@{/js/plugins/layui/layui.js}"></script>
+<script>
+    // 异步请求加载部门列表
+    layui.use(function (){
+        var laydate = layui.laydate;
+        var form = layui.form;
+        var $ = layui.$;
+
+        laydate.render({
+            elem: '#birthday',
+            type: 'date'
+        });
+
+        form.on('checkbox(role-filter)', function(data){
+            var checkeds = "";
+            // 1,2,3,4
+            $("input[name=roleId]:checked").each(function (i) {
+                if (i == 0){
+                    checkeds += $(this).val();
+                }else{
+                    checkeds += "," + $(this).val();
+                }
+            });
+            $("#roleIds").val(checkeds);
+        });
+    })
+
+</script>
+</body>
+</html>

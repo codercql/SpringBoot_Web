@@ -1,0 +1,358 @@
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Title</title>
+        <link rel="stylesheet" th:href="@{/css/plugins/layui/css/layui.css}">
+    <th:block th:include="include :: header('权限列表')" />
+    <style>
+        body {
+            padding: 10px;
+        }
+
+        .layui-form-item .layui-inline {
+            margin: 10px 0px;
+            padding-left: 15px;
+        }
+
+        #condition,#tableDiv {
+            background: #fff;
+        }
+    </style>
+</head>
+<body>
+<form id="condition">
+    <div class="layui-form-item">
+        <div class="layui-inline">
+            <div class="layui-input-inline layui-input-wrap">
+                <input type="text" placeholder="请输入权限名称" id="menuName" name="menuName" class="layui-input">
+            </div>
+            <button type="button" id="search" class="layui-btn">查询</button>
+            <button type="reset" id="reset" class="layui-btn">重置</button>
+        </div>
+    </div>
+</form>
+
+<!--
+本「综合演示」包含：自定义头部工具栏、获取表格数据、表格重载、自定义模板、单双行显示、单元格编辑、自定义底部分页栏、表格相关事件与操作、与其他组件的结合等相对常用的功能，以便快速掌握 table 组件的使用。
+-->
+<div id="tableDiv">
+    <table class="layui-hide" id="test" lay-filter="test"></table>
+</div>
+<script type="text/html" id="toolbarDemo">
+    <button class="layui-btn layui-btn-sm" lay-event="add">
+        <i class="glyphicon glyphicon-plus"></i>
+        新增</button>
+    <button class="layui-btn layui-btn-sm" lay-event="update">
+        <i class="glyphicon glyphicon-edit"></i>
+        修改</button>
+    <button class="layui-btn layui-btn-sm" lay-event="del">
+        <i class="glyphicon glyphicon-trash"></i>
+        删除</button>
+</script>
+<script type="text/html" id="toolDemo">
+    <div class="layui-clear-space">
+        <a class="layui-btn layui-btn-xs" lay-event="edit">编辑</a>
+        <a class="layui-btn layui-btn-xs" lay-event="more">
+            更多
+            <i class="layui-icon layui-icon-down"></i>
+        </a>
+    </div>
+</script>
+<script th:src="@{/js/plugins/layui/layui.js}"></script>
+<script>
+    layui.use(function(){
+        var $ = layui.$;
+        var table = layui.table;
+        var dropdown = layui.dropdown;
+
+        // 创建渲染实例
+        table.render({
+            elem: '#test',
+            url: '/permission/list', // 此处为静态模拟数据，实际使用时需换成真实接口
+            toolbar: '#toolbarDemo',
+            defaultToolbar: ['filter', 'exports', 'print', { // 右上角工具图标
+                title: '提示',
+                layEvent: 'LAYTABLE_TIPS',
+                icon: 'layui-icon-tips',
+                onClick: function(obj) { // 2.9.12+
+                    layer.alert('自定义工具栏图标按钮');
+                }
+            }],
+            css: [ // 重设当前表格样式
+                '.layui-table-tool-temp{padding-right: 145px;}'
+            ].join(''),
+            cellMinWidth: 80,
+            page: true,
+            cols: [
+                [
+                    {type: 'checkbox', fixed: 'left'},
+                    {field:'id', fixed: 'left', width:80, title: 'ID', sort: true, totalRow: '合计：'},
+                    {field:'menuName',  title: '权限名称'},
+                    {field:'menuType',  title: '权限类型'},
+                    {field:'url',  title: '请求地址'},
+                    {field:'perms',  title: '权限标识'},
+                    {fixed: 'right', title:'操作', width: 134, minWidth: 125, templet: '#toolDemo'}
+                ]
+            ],
+            error: function(res, msg){
+                console.log(res, msg)
+            }
+        });
+
+        // 工具栏事件
+        table.on('toolbar(test)', function(obj){
+            var id = obj.config.id;
+            var checkStatus = table.checkStatus(id);
+            var data = checkStatus.data; // 获取选中的数据
+            var othis = lay(this);
+            switch(obj.event){
+                case 'add':
+                    layer.open({
+                        title: '添加权限',
+                        type: 2,
+                        area: ['70%','70%'],
+                        content: '/permission/toadd',
+                        fixed: false, // 不固定
+                        maxmin: true,
+                        shadeClose: true,
+                        btn: ['立即提交', '取消'],
+                        btnAlign: 'c',
+                        yes: function(index, layero){
+                            // 获取 iframe 的窗口对象
+                            var iframeWin =  window[layero.find('iframe')[0]['name']];
+                            let menuName = iframeWin.$('#menuName'); // 获得 iframe 中某个输入框元素
+                            if($.trim(menuName.val()) === '') {
+                                // 显示获得的值
+                                layer.msg('权限名称不能为空');
+                                return menuName.focus();
+                            }
+
+                            let menuType = iframeWin.$('#menuType'); // 获得 iframe 中某个输入框元素
+                            if($.trim(menuType.val()) === '') {
+                                // 显示获得的值
+                                layer.msg('菜单类型不能为空');
+                                return menuType.focus();
+                            }
+
+                            let pId = iframeWin.$('#pId'); // 获得 iframe 中某个输入框元素
+                            let parentId = 0;
+                            if (menuType.val() === 'M') {
+                                parentId = 0;
+                            } else {
+                                if ($.trim(pId.val()) === '') {
+                                    layer.msg('父级菜单不能为空');
+                                    return pId.focus();
+                                } else {
+                                    parentId = pId.val();
+                                }
+                            }
+
+                            let url = iframeWin.$('#url'); // 获得 iframe 中某个输入框元素
+                            if($.trim(url.val()) === '') {
+                                // 显示获得的值
+                                layer.msg('请求地址不能为空');
+                                return url.focus();
+                            }
+
+                            let perms = iframeWin.$('#perms'); // 获得 iframe 中某个输入框元素
+                            if(menuType.val() !== 'M' && $.trim(perms.val()) === '') {
+                                // 显示获得的值
+                                layer.msg('权限标识不能为空');
+                                return perms.focus();
+                            }
+
+                            $.ajax({
+                                url: '/permission/addSave',
+                                type: 'post',
+                                data: {
+                                    menuName: menuName.val(),
+                                    menuType: menuType.val(),
+                                    parentId: parentId,
+                                    url: url.val(),
+                                    perms: perms.val()
+                                },
+                                dataType: 'json',
+                                success: function(res) {
+                                    layer.close(index);
+                                    if(res.code === 0) {
+                                        layer.msg(res.msg);
+                                        //刷新表格
+                                        table.reload('test');
+                                    }
+                                }
+                            })
+                        }
+                    });
+                    break;
+                case 'update':
+                    if(data.length !== 1) return layer.msg('请选择一行');
+                    layer.open({
+                        title: '编辑权限',
+                        type: 2,
+                        area: ['70%','70%'],
+                        content: '/permission/toupdate/'+checkStatus.data[0].id,
+                        fixed: false, // 不固定
+                        maxmin: true,
+                        shadeClose: true,
+                        btn: ['立即提交', '取消'],
+                        btnAlign: 'c',
+                        yes: function(index, layero){
+                            // 获取 iframe 的窗口对象
+                            var iframeWin =  window[layero.find('iframe')[0]['name']];
+                            let menuName = iframeWin.$('#menuName'); // 获得 iframe 中某个输入框元素
+                            if($.trim(menuName.val()) === '') {
+                                // 显示获得的值
+                                layer.msg('权限名称不能为空');
+                                return menuName.focus();
+                            }
+                            $.ajax({
+                                url: '/permission/updateSave',
+                                type: 'post',
+                                data: {
+                                    id: checkStatus.data[0].id,
+                                    menuName: menuName.val()
+                                },
+                                dataType: 'json',
+                                success: function(res) {
+                                    layer.close(index);
+                                    if(res.code === 0) {
+                                        layer.msg(res.msg);
+                                        //刷新表格
+                                        table.reload('test');
+                                    }
+                                }
+                            })
+                        }
+                    });
+                    break;
+                case 'del':
+                    if(data.length !== 1) return layer.msg('请选择一行');
+                    layer.confirm('确定删除吗？', function(index){
+                        $.ajax({
+                            url: '/permission/delete/'+checkStatus.data[0].id,
+                            type: 'post',
+                            dataType: 'json',
+                            success: function(res) {
+                                layer.close(index);
+                                if(res.code === 0) {
+                                    layer.msg(res.msg);
+                                    table.reload('test');
+                                }
+                            }
+                        })
+                    });
+            };
+        });
+
+        // 触发单元格工具事件
+        table.on('tool(test)', function(obj){ // 双击 toolDouble
+            var data = obj.data; // 获得当前行数据
+            // console.log(obj)
+            if(obj.event === 'edit'){
+                layer.open({
+                    title: '编辑部门',
+                    type: 2,
+                    area: ['70%','70%'],
+                    content: '/permission/toupdate/'+data.id,
+                    fixed: false, // 不固定
+                    maxmin: true,
+                    shadeClose: true,
+                    btn: ['立即提交', '取消'],
+                    btnAlign: 'c',
+                    yes: function(index, layero){
+                        // 获取 iframe 的窗口对象
+                        var iframeWin =  window[layero.find('iframe')[0]['name']];
+                        let menuName = iframeWin.$('#menuName'); // 获得 iframe 中某个输入框元素
+                        if($.trim(menuName.val()) === '') {
+                            // 显示获得的值
+                            layer.msg('账号不能为空');
+                            return menuName.focus();
+                        }
+                        $.ajax({
+                            url: '/permission/updateSave',
+                            type: 'post',
+                            data: {
+                                id: data.id,
+                                menuName: menuName.val()
+                            },
+                            dataType: 'json',
+                            success: function(res) {
+                                layer.close(index);
+                                if(res.code === 0) {
+                                    layer.msg(res.msg);
+                                    //刷新表格
+                                    table.reload('test');
+                                }
+                            }
+                        })
+                    }
+                });
+            } else if(obj.event === 'more'){
+                // 更多 - 下拉菜单
+                dropdown.render({
+                    elem: this, // 触发事件的 DOM 对象
+                    show: true, // 外部事件触发即显示
+                    data: [{
+                        title: '查看',
+                        id: 'detail'
+                    },{
+                        title: '删除',
+                        id: 'del'
+                    }],
+                    click: function(menudata){
+                        if(menudata.id === 'detail'){
+                            layer.open({
+                                title: '查看部门',
+                                type: 2,
+                                area: ['70%','70%'],
+                                content: '/permission/toinfo/'+data.id,
+                                fixed: false, // 不固定
+                                maxmin: true,
+                                shadeClose: true,
+                                btn: ['关闭'],
+                                btnAlign: 'c'
+                            });
+                        } else if(menudata.id === 'del'){
+                            layer.confirm('确定删除吗？', function(index){
+                                $.ajax({
+                                    url: '/permission/delete/'+data.id,
+                                    type: 'post',
+                                    dataType: 'json',
+                                    success: function(res) {
+                                        layer.close(index);
+                                        if(res.code === 0) {
+                                            layer.msg(res.msg);
+                                            table.reload('test');
+                                        }
+                                    }
+                                })
+                            });
+                        }
+                    },
+                    align: 'right', // 右对齐弹出
+                    style: 'box-shadow: 1px 1px 10px rgb(0 0 0 / 12%);' // 设置额外样式
+                })
+            }
+        });
+
+        $("#search").click(function (){
+            var menuName = $("#menuName").val();
+            var data = {menuName:menuName};
+            table.reload('test',{
+                where:data,
+                page:{
+                    curr:1
+                }
+            })
+        })
+        $("#reset").click(function (){
+            table.reload('test',{
+                where:{},
+                page:{
+                    curr:1
+                }
+            });
+        })
+    });
+</script>
+</body>
+</html>
