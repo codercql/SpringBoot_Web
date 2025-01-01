@@ -139,10 +139,10 @@
 
     <select id="majorBoyGirlNum" resultType="com.zyg.pojo.MajorBoyGirlNumVO">
         SELECT
-        sm.major_name AS name,
+        sm.major_name AS major,
         COUNT(*) AS student_count,
-        COUNT(CASE WHEN stu.student_gender = '男' THEN 1 END) AS boy_count,
-        COUNT(CASE WHEN stu.student_gender = '女' THEN 1 END) AS girl_count
+        COUNT(CASE WHEN stu.student_gender = '男' THEN 1 END) AS boyNum,
+        COUNT(CASE WHEN stu.student_gender = '女' THEN 1 END) AS girlNum
         FROM
         sys_student stu
         INNER JOIN
