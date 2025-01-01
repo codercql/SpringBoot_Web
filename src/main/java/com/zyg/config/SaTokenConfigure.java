@@ -1,6 +1,8 @@
 package com.zyg.config;
 
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -20,4 +22,13 @@ public class SaTokenConfigure implements WebMvcConfigurer {
 //                .excludePathPatterns("/js/**")
 //                .excludePathPatterns("/plugin/**");
     }
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry){
+        registry.addMapping("/**")
+                .allowedOrigins("*")
+                .allowedMethods("GET","PUT","DELETE","OPTIONS")
+                .allowedHeaders("*");
+    }
+
 }
